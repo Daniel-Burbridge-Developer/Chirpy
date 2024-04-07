@@ -7,9 +7,11 @@ func main() {
 	mux.Handle("/app/*", http.FileServer(http.Dir(".")))
 
 	corsMux := middlewareCors(mux)
-	readiMux := middlewareReadiness(corsMux)
 
-	httpServer := &http.Server{Addr: "localhost:8080", Handler: readiMux}
+	http.HandleFunc("/healthz", readinessHandler)
+	http.StripPrefix("/app", mux)
+
+	httpServer := &http.Server{Addr: "localhost:8080", Handler: corsMux}
 	httpServer.ListenAndServe()
 }
 
@@ -26,11 +28,8 @@ func middlewareCors(next http.Handler) http.Handler {
 	})
 }
 
-func middlewareReadiness(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("OK"))
-		next.ServeHTTP(w, r)
-	})
+func readinessHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	w.WriteHeader(200)
+	w.Write([]byte("OK"))
 }
