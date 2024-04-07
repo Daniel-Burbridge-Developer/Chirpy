@@ -4,8 +4,12 @@ import "net/http"
 
 func main() {
 	mux := http.NewServeMux()
-	//mux.Handle("/app/app", http.StripPrefix("/app/", http.FileServer(http.Dir("."))))
-	mux.Handle("/", http.FileServer(http.Dir("./app")))
+
+	mux.Handle("/app/*", http.StripPrefix("/app", http.FileServer(http.Dir("."))))
+
+	// This would work if I moved everything into an "App" folder in the root directory, which feels more correct to me?
+	// mux.Handle("/app/", http.FileServer(http.Dir(".")))
+
 	mux.HandleFunc("/healthz", readinessHandler)
 
 	corsMux := middlewareCors(mux)
