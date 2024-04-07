@@ -4,7 +4,8 @@ import "net/http"
 
 func main() {
 	mux := http.NewServeMux()
-	mux.Handle("/app/", http.StripPrefix("/app/", http.FileServer(http.Dir("."))))
+	//mux.Handle("/app/app", http.StripPrefix("/app/", http.FileServer(http.Dir("."))))
+	mux.Handle("/", http.FileServer(http.Dir("./app")))
 	mux.HandleFunc("/healthz", readinessHandler)
 
 	corsMux := middlewareCors(mux)
