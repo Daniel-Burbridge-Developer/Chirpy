@@ -5,6 +5,7 @@ import (
 )
 
 func main() {
+	apiCfg := &apiConfig
 	mux := http.NewServeMux()
 
 	mux.Handle("/app/*", http.StripPrefix("/app", http.FileServer(http.Dir("."))))
@@ -17,7 +18,7 @@ func main() {
 	corsMux := middlewareCors(mux)
 	httpServer := &http.Server{Addr: "localhost:8080", Handler: corsMux}
 
-	mux.Handle("/app/*", apiConfig.middlewareMetricsInc(httpServer))
+	mux.Handle("/app/*", apiCfg.middlewareMetricsInc(httpServer))
 	httpServer.ListenAndServe()
 }
 
