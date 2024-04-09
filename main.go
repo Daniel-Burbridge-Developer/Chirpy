@@ -1,6 +1,8 @@
 package main
 
-import "net/http"
+import (
+	"net/http"
+)
 
 func main() {
 	mux := http.NewServeMux()
@@ -13,8 +15,9 @@ func main() {
 	mux.HandleFunc("/healthz", readinessHandler)
 
 	corsMux := middlewareCors(mux)
-
 	httpServer := &http.Server{Addr: "localhost:8080", Handler: corsMux}
+
+	mux.Handle("/app/*", apiConfig.middlewareMetricsInc(httpServer))
 	httpServer.ListenAndServe()
 }
 
