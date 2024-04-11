@@ -10,8 +10,7 @@ func main() {
 	apiCfg := &models.ApiConfig{}
 	mux := http.NewServeMux()
 
-	mux.Handle("/app/*", http.StripPrefix("/app", http.FileServer(http.Dir("."))))
-	mux.Handle("/app/*", apiCfg.middlewareMetricsInc())
+	mux.Handle("/app/*", http.StripPrefix("/app", apiCfg.MiddlewareMetricsInc(http.FileServer(http.Dir(".")))))
 
 	mux.HandleFunc("/healthz", readinessHandler)
 
