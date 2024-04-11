@@ -2,17 +2,16 @@ package main
 
 import (
 	"net/http"
+
+	"github.com/Daniel-Burbridge-Developer/Chirpy/models"
 )
 
 func main() {
-	apiCfg := &models.apiConfig
+	apiCfg := &models.ApiConfig{}
 	mux := http.NewServeMux()
 
 	mux.Handle("/app/*", http.StripPrefix("/app", http.FileServer(http.Dir("."))))
 	mux.Handle("/app/*", apiCfg.middlewareMetricsInc())
-
-	// This would work if I moved everything into an "App" folder in the root directory, which feels more correct to me?
-	// mux.Handle("/app/", http.FileServer(http.Dir(".")))
 
 	mux.HandleFunc("/healthz", readinessHandler)
 
