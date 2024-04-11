@@ -4,4 +4,6 @@
 # Binaries for programs and plugins
 *.exe
 *.exe~
-out
+bin/
+
+# Find a way to ignore the build file
