@@ -5,10 +5,11 @@ import (
 )
 
 func main() {
-	apiCfg := &apiConfig
+	apiCfg := &models.apiConfig
 	mux := http.NewServeMux()
 
 	mux.Handle("/app/*", http.StripPrefix("/app", http.FileServer(http.Dir("."))))
+	mux.Handle("/app/*", apiCfg.middlewareMetricsInc())
 
 	// This would work if I moved everything into an "App" folder in the root directory, which feels more correct to me?
 	// mux.Handle("/app/", http.FileServer(http.Dir(".")))
@@ -18,7 +19,6 @@ func main() {
 	corsMux := middlewareCors(mux)
 	httpServer := &http.Server{Addr: "localhost:8080", Handler: corsMux}
 
-	mux.Handle("/app/*", apiCfg.middlewareMetricsInc(httpServer))
 	httpServer.ListenAndServe()
 }
 
