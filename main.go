@@ -78,7 +78,7 @@ func validateChirpHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(500)
+		w.WriteHeader(400)
 		w.Write(dat)
 		return
 	}
