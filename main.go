@@ -51,7 +51,7 @@ func validateChirpHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type returnValsValid struct {
-		Valid string `json:"valid"`
+		Valid bool `json:"valid"`
 	}
 
 	type returnValsInvalid struct {
@@ -84,7 +84,7 @@ func validateChirpHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respBody := returnValsValid{
-		Valid: "true",
+		Valid: true,
 	}
 
 	dat, err := json.Marshal(respBody)
