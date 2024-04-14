@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"slices"
@@ -56,8 +55,8 @@ func validateChirpHandler(w http.ResponseWriter, r *http.Request) {
 	params := parameters{}
 	err := decoder.Decode(&params)
 
-	fmt.Printf("Request literal: %v\n", params)
-	fmt.Printf("Character length of request: %v\n", len(params.Body))
+	// fmt.Printf("Request literal: %v\n", params)
+	// fmt.Printf("Character length of request: %v\n", len(params.Body))
 
 	badWords := []string{"kerfuffle", "sharbert", "fornax"}
 	chirp := wordReplacer(badWords, strings.Split(params.Body, " "))
@@ -97,12 +96,10 @@ func respondWithError(w http.ResponseWriter, code int, msg string) {
 
 func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 	type returnVals struct {
-		Valid       bool        `json:"valid"`
 		CleanedBody interface{} `json:"cleaned_body"`
 	}
 
 	respBody := returnVals{
-		Valid:       true,
 		CleanedBody: payload,
 	}
 
