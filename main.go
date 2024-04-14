@@ -59,9 +59,9 @@ func validateChirpHandler(w http.ResponseWriter, r *http.Request) {
 	// fmt.Printf("Character length of request: %v\n", len(params.Body))
 
 	badWords := []string{"kerfuffle", "sharbert", "fornax"}
-	chirp := wordReplacer(badWords, strings.Split(params.Body, " "))
+	chirpBody := wordReplacer(badWords, strings.Split(params.Body, " "))
 
-	if err != nil || len(chirp) > 140 {
+	if err != nil || len(chirpBody) > 140 {
 		if err != nil {
 			respondWithError(w, 400, err.Error())
 		} else {
@@ -69,6 +69,11 @@ func validateChirpHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 	} else {
+		// Replace with CreateChirp
+		chirp := &models.Chirp{
+			Id:   1,
+			Body: chirpBody,
+		}
 		respondWithJSON(w, 200, chirp)
 	}
 }
@@ -95,15 +100,9 @@ func respondWithError(w http.ResponseWriter, code int, msg string) {
 }
 
 func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
-	type returnVals struct {
-		CleanedBody interface{} `json:"cleaned_body"`
-	}
 
-	respBody := returnVals{
-		CleanedBody: payload,
-	}
+	dat, err := json.Marshal(payload)
 
-	dat, err := json.Marshal(respBody)
 	if err != nil {
 		log.Printf("Error marshalling JSON: %s", err)
 		return
