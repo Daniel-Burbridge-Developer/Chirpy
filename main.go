@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"slices"
+	"strings"
 
 	"github.com/Daniel-Burbridge-Developer/Chirpy/models"
 )
@@ -50,14 +52,6 @@ func validateChirpHandler(w http.ResponseWriter, r *http.Request) {
 		Body string `json:"body"`
 	}
 
-	type returnValsValid struct {
-		Valid bool `json:"valid"`
-	}
-
-	type returnValsInvalid struct {
-		Error string `json:"error"`
-	}
-
 	decoder := json.NewDecoder(r.Body)
 	params := parameters{}
 	err := decoder.Decode(&params)
@@ -65,26 +59,51 @@ func validateChirpHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("Request literal: %v\n", params)
 	fmt.Printf("Character length of request: %v\n", len(params.Body))
 
-	// This seems hacky and not how I am meant to be doing this, pretty sure I'm meant to be doing this with the error value....
-	if err != nil || len(params.Body) > 140 {
+	badWords := []string{"kerfuffle", "sharbert", "fornax"}
+	chirp := wordReplacer(badWords, strings.Split(params.Body, " "))
 
-		respBody := returnValsInvalid{
-			Error: "Something went wrong",
-		}
-
-		dat, err := json.Marshal(respBody)
+	if err != nil || len(chirp) > 140 {
 		if err != nil {
-			log.Printf("Error marshalling JSON: %s", err)
-			return
+			respondWithError(w, 400, err.Error())
+		} else {
+			respondWithError(w, 400, "chirp too long")
 		}
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(400)
-		w.Write(dat)
+
+	} else {
+		respondWithJSON(w, 200, chirp)
+	}
+}
+
+func respondWithError(w http.ResponseWriter, code int, msg string) {
+	type returnVals struct {
+		Error string `json:"error"`
+	}
+
+	respBody := returnVals{
+		Error: msg,
+	}
+
+	dat, err := json.Marshal(respBody)
+
+	if err != nil {
+		log.Printf("Error marshalling JSON: %s", err)
 		return
 	}
 
-	respBody := returnValsValid{
-		Valid: true,
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(code)
+	w.Write(dat)
+}
+
+func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
+	type returnVals struct {
+		Valid       bool        `json:"valid"`
+		CleanedBody interface{} `json:"cleaned_body"`
+	}
+
+	respBody := returnVals{
+		Valid:       true,
+		CleanedBody: payload,
 	}
 
 	dat, err := json.Marshal(respBody)
@@ -92,7 +111,21 @@ func validateChirpHandler(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error marshalling JSON: %s", err)
 		return
 	}
+
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
+	w.WriteHeader(code)
 	w.Write(dat)
+}
+
+// Expects badWords to be passed in, in lowercase.
+func wordReplacer(badWords []string, usedWords []string) string {
+	cleanWords := make([]string, 0, len(usedWords))
+	for _, word := range usedWords {
+		if slices.Contains(badWords, strings.ToLower(word)) {
+			cleanWords = append(cleanWords, "****")
+		} else {
+			cleanWords = append(cleanWords, word)
+		}
+	}
+	return strings.Join(cleanWords, " ")
 }
