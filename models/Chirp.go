@@ -121,16 +121,20 @@ func (db *DB) loadDB() (DBStructure, error) {
 	db.mux.RLock()
 	defer db.mux.RUnlock()
 
+	fmt.Printf("file path %v\n", db.path)
 	data, err := os.ReadFile(db.path)
 	if err != nil {
 		fmt.Printf("unable to read file?")
 		return DBStructure{}, err
 	}
 
+	fmt.Println("Data read from file:", string(data))
+
 	dbStructure := DBStructure{}
 	err = json.Unmarshal(data, &dbStructure)
+
 	if err != nil {
-		fmt.Printf("unable to Unmarshal file?")
+		fmt.Printf("unable to Unmarshal file? %v\n", err)
 		return DBStructure{}, nil
 	}
 

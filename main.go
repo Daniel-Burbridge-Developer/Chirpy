@@ -53,7 +53,7 @@ func uploadChirpHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func receiveChirpsHandler(w http.ResponseWriter, r *http.Request) {
-	db, err := models.NewDB("./internal/database/database.go")
+	db, err := models.NewDB("./internal/database/database.json")
 	if err != nil {
 		fmt.Printf("error initializing DB: %v", err)
 		http.Error(w, "internal server error", http.StatusInternalServerError)
