@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+	"errors"
 	"os"
 	"sync"
 )
@@ -90,37 +91,61 @@ func (db *DB) ensureDB() error {
 
 // loadDB reads the database file int0o memory
 func (db *DB) loadDB() (DBStructure, error) {
-	db.mux.RLock()
-	defer db.mux.RUnlock()
 
-	dbStructure := DBStructure{}
+	dbs := DBStructure{}
+	er := errors.New("temp error")
 
-	data, err := os.ReadFile(db.path)
-	if err != nil {
-		return DBStructure{}, err
+	go func() {
+		db.mux.RLock()
+		defer db.mux.RUnlock()
+
+		dbStructure := DBStructure{}
+
+		data, err := os.ReadFile(db.path)
+		if err != nil {
+			dbs = dbStructure
+			er = err
+		}
+
+		err = json.Unmarshal(data, &dbStructure)
+		if err != nil {
+			dbs = dbStructure
+			er = err
+		}
+
+		dbs = dbStructure
+		er = err
+	}()
+
+	if er != nil {
+		return dbs, er
 	}
 
-	err = json.Unmarshal(data, &dbStructure)
-	if err != nil {
-		return DBStructure{}, err
-	}
-
-	return dbStructure, nil
+	return dbs, nil
 }
 
 // writeDB writes the database file to disk
 func (db *DB) writeDB(dbStructure DBStructure) error {
-	db.mux.Lock()
-	defer db.mux.Unlock()
 
-	JSON, err := json.Marshal(dbStructure)
-	if err != nil {
-		return err
-	}
+	er := errors.New("temp error")
 
-	err = os.WriteFile(db.path, JSON, 0666)
-	if err != nil {
-		return err
+	go func() {
+		db.mux.Lock()
+		defer db.mux.Unlock()
+
+		JSON, err := json.Marshal(dbStructure)
+		if err != nil {
+			er = err
+		}
+
+		err = os.WriteFile(db.path, JSON, 0666)
+		if err != nil {
+			er = err
+		}
+	}()
+
+	if er != nil {
+		return er
 	}
 
 	return nil
