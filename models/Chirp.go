@@ -41,9 +41,20 @@ func (db *DB) CreateChirp(body string) (Chirp, error) {
 		return Chirp{}, err
 	}
 	chirp := Chirp{
-		Id:   len(chirps) - 1,
+		Id:   len(chirps) + 1,
 		Body: body,
 	}
+
+	chirps = append(chirps, chirp)
+
+	dbStructure := DBStructure{}
+
+	for i, chirp := range chirps {
+		dbStructure.Chirps[i] = chirp
+	}
+
+	db.writeDB(dbStructure)
+
 	return chirp, nil
 }
 
@@ -52,18 +63,14 @@ func (db *DB) GetChirps() ([]Chirp, error) {
 	db.mux.RLock()
 	defer db.mux.RUnlock()
 
-	data, err := os.ReadFile(db.path)
-	if err != nil {
-		return nil, err
-	}
+	dbStructure, err := db.loadDB()
 
-	dbStructure := DBStructure{}
-	err = json.Unmarshal(data, &dbStructure)
 	if err != nil {
-		return nil, err
+		return make([]Chirp, 0), err
 	}
 
 	chirps := make([]Chirp, 0)
+
 	for _, chirp := range dbStructure.Chirps {
 		chirps = append(chirps, chirp)
 	}
@@ -80,10 +87,38 @@ func (db *DB) ensureDB() error {
 
 // loadDB reads the database file int0o memory
 func (db *DB) loadDB() (DBStructure, error) {
-	return DBStructure{}, nil
+	db.mux.RLock()
+	defer db.mux.RUnlock()
+
+	dbStructure := DBStructure{}
+
+	data, err := os.ReadFile(db.path)
+	if err != nil {
+		return DBStructure{}, err
+	}
+
+	err = json.Unmarshal(data, &dbStructure)
+	if err != nil {
+		return DBStructure{}, err
+	}
+
+	return dbStructure, nil
 }
 
 // writeDB writes the database file to disk
 func (db *DB) writeDB(dbStructure DBStructure) error {
+	db.mux.Lock()
+	defer db.mux.Unlock()
+
+	JSON, err := json.Marshal(dbStructure)
+	if err != nil {
+		return err
+	}
+
+	err = os.WriteFile(db.path, JSON, 0666)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
