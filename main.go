@@ -84,6 +84,8 @@ func validateChirpHandler(w http.ResponseWriter, r *http.Request) {
 	badWords := []string{"kerfuffle", "sharbert", "fornax"}
 	chirpBody := wordReplacer(badWords, strings.Split(params.Body, " "))
 
+	fmt.Printf("after badword replaced, before call to createchirp%v\n", chirpBody)
+
 	if err != nil || len(chirpBody) > 140 {
 		if err != nil {
 			respondWithError(w, 400, err.Error())
@@ -92,7 +94,7 @@ func validateChirpHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 	} else {
-		db, _ := models.NewDB("./internal/database/database.go")
+		db, _ := models.NewDB("./internal/database/database.json")
 		chirp, _ := db.CreateChirp(chirpBody)
 		respondWithJSON(w, 201, chirp)
 	}

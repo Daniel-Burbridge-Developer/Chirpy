@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"sync"
 )
@@ -13,11 +14,11 @@ type DB struct {
 
 // Only used in writing, maybe reading. I don't need one of these because I'm writing and reading every update. remember this.
 type DBStructure struct {
-	Chirps map[int]Chirp `json:"chirps"`
+	Chirps map[string]Chirp `json:"chirps"`
 }
 
 type Chirp struct {
-	Id   int         `json:"id"`
+	Id   string      `json:"id"`
 	Body interface{} `json:"body"`
 }
 
@@ -45,17 +46,25 @@ func NewDB(path string) (*DB, error) {
 
 // CreateChirp creates a new chirp and saves it to disk
 func (db *DB) CreateChirp(body string) (Chirp, error) {
+	fmt.Printf("inside createchirp %v\n", body)
 	chirps, err := db.GetChirps()
-	chirpMap := make(map[int]Chirp)
+	chirpMap := make(map[string]Chirp)
 	if err != nil {
 		return Chirp{}, err
 	}
 	chirp := Chirp{
-		Id:   len(chirps) + 1, // Assuming chirp IDs start from 1
+		Id:   string(len(chirps) + 1), // Assuming chirp IDs start from 1
 		Body: body,
 	}
 
+	fmt.Printf("chirpID %v\n", chirp.Id)
+	fmt.Printf("chirpBODY %v\n", chirp.Body)
+
 	// Update the map with chirp ID as key
+	for _, ch := range chirps {
+		chirpMap[ch.Id] = ch
+	}
+
 	chirpMap[chirp.Id] = chirp
 
 	dbStructure := DBStructure{
@@ -114,15 +123,19 @@ func (db *DB) loadDB() (DBStructure, error) {
 
 	data, err := os.ReadFile(db.path)
 	if err != nil {
+		fmt.Printf("unable to read file?")
 		return DBStructure{}, err
 	}
 
-	var dbStructure DBStructure
+	dbStructure := DBStructure{}
 	err = json.Unmarshal(data, &dbStructure)
 	if err != nil {
-		return DBStructure{}, err
+		fmt.Printf("unable to Unmarshal file?")
+		return DBStructure{}, nil
 	}
 
+	fmt.Printf("dbs not doing what I think it does?\n")
+	fmt.Printf("%v", dbStructure.Chirps)
 	return dbStructure, nil
 }
 
@@ -144,6 +157,5 @@ func (db *DB) writeDB(dbStructure DBStructure) error {
 	return nil
 }
 
-// Current known Errors:
-// not saving to file
-// can't call get chirps on empty DB
+// Error in Unmarshalling....
+// Changed all my IDs to strings, I think this was silly but IDK.

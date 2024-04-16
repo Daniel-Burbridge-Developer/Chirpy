@@ -18,16 +18,16 @@ func TestWriteDB(t *testing.T) {
 
 	// Define test data
 	testChirps := []Chirp{
-		{Id: 1, Body: "Hello, world!"},
-		{Id: 2, Body: "Testing chirps"},
+		{Id: "1", Body: "Hello, world!"},
+		{Id: "2", Body: "Testing chirps"},
 	}
 
 	testDBStructure := DBStructure{
-		Chirps: make(map[int]Chirp),
+		Chirps: make(map[string]Chirp),
 	}
 
 	for i, chirp := range testChirps {
-		testDBStructure.Chirps[i] = chirp
+		testDBStructure.Chirps[string(i)] = chirp
 	}
 
 	// Write test data to the file
