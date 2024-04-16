@@ -18,7 +18,9 @@ func main() {
 	mux.HandleFunc("GET /api/healthz", readinessHandler)
 	mux.HandleFunc("GET /admin/metrics", apiCfg.RequestCountHandler)
 	mux.HandleFunc("/api/reset", apiCfg.ResetCountHandler)
-	mux.HandleFunc("POST /api/validate_chirp", validateChirpHandler)
+	// mux.HandleFunc("POST /api/validate_chirp", validateChirpHandler)
+	mux.HandleFunc("POST /api/chirps", uploadChirpHandler)
+	mux.HandleFunc("GET /api/chirps", receiveChirpsHandler)
 
 	corsMux := middlewareCors(mux)
 	httpServer := &http.Server{Addr: "localhost:8080", Handler: corsMux}
@@ -45,6 +47,16 @@ func readinessHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("OK"))
 }
 
+func uploadChirpHandler(w http.ResponseWriter, r *http.Request) {
+	validateChirpHandler(w, r)
+}
+
+func receiveChirpsHandler(w http.ResponseWriter, r *http.Request) {
+	db, _ := models.NewDB("./internal/database/database.go")
+	chirps, _ := db.GetChirps()
+	respondWithJSON(w, 200, chirps)
+}
+
 // Not handling cases where there is no Json.Body at all. This just returns "valid", I'm fairly sure I've written this in a very hacky, not proper way.
 func validateChirpHandler(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
@@ -69,12 +81,9 @@ func validateChirpHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 	} else {
-		// Replace with CreateChirp
-		chirp := &models.Chirp{
-			Id:   1,
-			Body: chirpBody,
-		}
-		respondWithJSON(w, 200, chirp)
+		db, _ := models.NewDB("./internal/database/database.go")
+		chirp, _ := db.CreateChirp(chirpBody)
+		respondWithJSON(w, 201, chirp)
 	}
 }
 
