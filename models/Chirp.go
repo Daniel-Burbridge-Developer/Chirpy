@@ -31,10 +31,14 @@ func NewDB(path string) (*DB, error) {
 
 	_, err := os.ReadFile(path)
 	if err != nil {
-		if err == os.ErrNotExist {
-			db.ensureDB()
+		if os.IsNotExist(err) {
+			err := db.ensureDB()
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			return nil, err
 		}
-		return &db, err
 	}
 	return &db, nil
 }
@@ -88,7 +92,18 @@ func (db *DB) GetChirps() ([]Chirp, error) {
 
 // ensureDB creates a new database file if it doesn't exist
 func (db *DB) ensureDB() error {
-	os.WriteFile(db.path, []byte(""), 0666)
+	// Create the file with empty content if it doesn't exist
+	file, err := os.Create(db.path)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	// Set permissions for the file
+	err = file.Chmod(0666)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -129,6 +144,6 @@ func (db *DB) writeDB(dbStructure DBStructure) error {
 	return nil
 }
 
-// CHAT GPT'D for so long trying to work this out, and in the end, the only use it gave was the fact I had a NIL error.
-// It had me go through and rewrite so many things lol, but I just wasn't understanding how to init the MUX LOCK properly.
-// Sigh
+// Current known Errors:
+// not saving to file
+// can't call get chirps on empty DB
