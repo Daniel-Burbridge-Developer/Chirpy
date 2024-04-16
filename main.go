@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"slices"
@@ -52,8 +53,18 @@ func uploadChirpHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func receiveChirpsHandler(w http.ResponseWriter, r *http.Request) {
-	db, _ := models.NewDB("./internal/database/database.go")
-	chirps, _ := db.GetChirps()
+	db, err := models.NewDB("./internal/database/database.go")
+	if err != nil {
+		fmt.Printf("error initializing DB: %v", err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+	chirps, err := db.GetChirps()
+	if err != nil {
+		fmt.Printf("error retrieving chirps: %v", err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
 	respondWithJSON(w, 200, chirps)
 }
 

@@ -2,7 +2,6 @@ package models
 
 import (
 	"encoding/json"
-	"errors"
 	"os"
 	"sync"
 )
@@ -27,7 +26,9 @@ type Chirp struct {
 func NewDB(path string) (*DB, error) {
 	db := DB{
 		path: path,
+		mux:  &sync.RWMutex{},
 	}
+
 	_, err := os.ReadFile(path)
 	if err != nil {
 		if err == os.ErrNotExist {
@@ -41,23 +42,26 @@ func NewDB(path string) (*DB, error) {
 // CreateChirp creates a new chirp and saves it to disk
 func (db *DB) CreateChirp(body string) (Chirp, error) {
 	chirps, err := db.GetChirps()
+	chirpMap := make(map[int]Chirp)
 	if err != nil {
 		return Chirp{}, err
 	}
 	chirp := Chirp{
-		Id:   len(chirps) + 1,
+		Id:   len(chirps) + 1, // Assuming chirp IDs start from 1
 		Body: body,
 	}
 
-	chirps = append(chirps, chirp)
+	// Update the map with chirp ID as key
+	chirpMap[chirp.Id] = chirp
 
-	dbStructure := DBStructure{}
-
-	for i, chirp := range chirps {
-		dbStructure.Chirps[i] = chirp
+	dbStructure := DBStructure{
+		Chirps: chirpMap,
 	}
 
-	db.writeDB(dbStructure)
+	err = db.writeDB(dbStructure)
+	if err != nil {
+		return Chirp{}, err
+	}
 
 	return chirp, nil
 }
@@ -89,64 +93,42 @@ func (db *DB) ensureDB() error {
 	return nil
 }
 
-// loadDB reads the database file int0o memory
 func (db *DB) loadDB() (DBStructure, error) {
+	db.mux.RLock()
+	defer db.mux.RUnlock()
 
-	dbs := DBStructure{}
-	er := errors.New("temp error")
-
-	go func() {
-		db.mux.RLock()
-		defer db.mux.RUnlock()
-
-		dbStructure := DBStructure{}
-
-		data, err := os.ReadFile(db.path)
-		if err != nil {
-			dbs = dbStructure
-			er = err
-		}
-
-		err = json.Unmarshal(data, &dbStructure)
-		if err != nil {
-			dbs = dbStructure
-			er = err
-		}
-
-		dbs = dbStructure
-		er = err
-	}()
-
-	if er != nil {
-		return dbs, er
+	data, err := os.ReadFile(db.path)
+	if err != nil {
+		return DBStructure{}, err
 	}
 
-	return dbs, nil
+	var dbStructure DBStructure
+	err = json.Unmarshal(data, &dbStructure)
+	if err != nil {
+		return DBStructure{}, err
+	}
+
+	return dbStructure, nil
 }
 
 // writeDB writes the database file to disk
 func (db *DB) writeDB(dbStructure DBStructure) error {
+	db.mux.Lock()
+	defer db.mux.Unlock()
 
-	er := errors.New("temp error")
+	JSON, err := json.Marshal(dbStructure)
+	if err != nil {
+		return err
+	}
 
-	go func() {
-		db.mux.Lock()
-		defer db.mux.Unlock()
-
-		JSON, err := json.Marshal(dbStructure)
-		if err != nil {
-			er = err
-		}
-
-		err = os.WriteFile(db.path, JSON, 0666)
-		if err != nil {
-			er = err
-		}
-	}()
-
-	if er != nil {
-		return er
+	err = os.WriteFile(db.path, JSON, 0666)
+	if err != nil {
+		return err
 	}
 
 	return nil
 }
+
+// CHAT GPT'D for so long trying to work this out, and in the end, the only use it gave was the fact I had a NIL error.
+// It had me go through and rewrite so many things lol, but I just wasn't understanding how to init the MUX LOCK properly.
+// Sigh
