@@ -23,15 +23,18 @@ type Chirp struct {
 
 // NewDB creates a new database connection
 // and creates the database file if it doesn't exist
-func (db *DB) NewDB(path string) (*DB, error) {
+func NewDB(path string) (*DB, error) {
+	db := DB{
+		path: path,
+	}
 	_, err := os.ReadFile(path)
 	if err != nil {
 		if err == os.ErrNotExist {
 			db.ensureDB()
 		}
-		return nil, err
+		return &db, err
 	}
-	return db, nil
+	return &db, nil
 }
 
 // CreateChirp creates a new chirp and saves it to disk
