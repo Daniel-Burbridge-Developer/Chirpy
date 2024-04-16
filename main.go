@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"slices"
+	"sort"
 	"strings"
 
 	"github.com/Daniel-Burbridge-Developer/Chirpy/models"
@@ -65,6 +66,11 @@ func receiveChirpsHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
 	}
+
+	sort.Slice(chirps, func(i, j int) bool {
+		return chirps[i].Id < chirps[j].Id
+	})
+
 	respondWithJSON(w, 200, chirps)
 }
 
@@ -84,7 +90,7 @@ func validateChirpHandler(w http.ResponseWriter, r *http.Request) {
 	badWords := []string{"kerfuffle", "sharbert", "fornax"}
 	chirpBody := wordReplacer(badWords, strings.Split(params.Body, " "))
 
-	fmt.Printf("after badword replaced, before call to createchirp%v\n", chirpBody)
+	// fmt.Printf("after badword replaced, before call to createchirp%v\n", chirpBody)
 
 	if err != nil || len(chirpBody) > 140 {
 		if err != nil {

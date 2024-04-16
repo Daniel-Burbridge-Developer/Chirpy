@@ -14,11 +14,11 @@ type DB struct {
 
 // Only used in writing, maybe reading. I don't need one of these because I'm writing and reading every update. remember this.
 type DBStructure struct {
-	Chirps map[string]Chirp `json:"chirps"`
+	Chirps map[int]Chirp `json:"chirps"`
 }
 
 type Chirp struct {
-	Id   string      `json:"id"`
+	Id   int         `json:"id"`
 	Body interface{} `json:"body"`
 }
 
@@ -46,19 +46,19 @@ func NewDB(path string) (*DB, error) {
 
 // CreateChirp creates a new chirp and saves it to disk
 func (db *DB) CreateChirp(body string) (Chirp, error) {
-	fmt.Printf("inside createchirp %v\n", body)
+	// fmt.Printf("inside createchirp %v\n", body)
 	chirps, err := db.GetChirps()
-	chirpMap := make(map[string]Chirp)
+	chirpMap := make(map[int]Chirp)
 	if err != nil {
 		return Chirp{}, err
 	}
 	chirp := Chirp{
-		Id:   string(len(chirps) + 1), // Assuming chirp IDs start from 1
+		Id:   len(chirps) + 1, // Assuming chirp IDs start from 1
 		Body: body,
 	}
 
-	fmt.Printf("chirpID %v\n", chirp.Id)
-	fmt.Printf("chirpBODY %v\n", chirp.Body)
+	// fmt.Printf("chirpID %v\n", chirp.Id)
+	// fmt.Printf("chirpBODY %v\n", chirp.Body)
 
 	// Update the map with chirp ID as key
 	for _, ch := range chirps {
@@ -121,25 +121,25 @@ func (db *DB) loadDB() (DBStructure, error) {
 	db.mux.RLock()
 	defer db.mux.RUnlock()
 
-	fmt.Printf("file path %v\n", db.path)
+	// fmt.Printf("file path %v\n", db.path)
 	data, err := os.ReadFile(db.path)
 	if err != nil {
 		fmt.Printf("unable to read file?")
 		return DBStructure{}, err
 	}
 
-	fmt.Println("Data read from file:", string(data))
+	// fmt.Println("Data read from file:", string(data))
 
 	dbStructure := DBStructure{}
 	err = json.Unmarshal(data, &dbStructure)
 
 	if err != nil {
-		fmt.Printf("unable to Unmarshal file? %v\n", err)
+		// fmt.Printf("unable to Unmarshal file? %v\n", err)
 		return DBStructure{}, nil
 	}
 
-	fmt.Printf("dbs not doing what I think it does?\n")
-	fmt.Printf("%v", dbStructure.Chirps)
+	// fmt.Printf("dbs not doing what I think it does?\n")
+	// fmt.Printf("%v", dbStructure.Chirps)
 	return dbStructure, nil
 }
 
