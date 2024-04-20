@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"errors"
 	"flag"
 	"fmt"
 	"log"
@@ -98,7 +97,42 @@ func createUserHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func loginHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Printf("%v", errors.New("not implemented"))
+	type parameters struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+
+	decoder := json.NewDecoder(r.Body)
+	params := parameters{}
+	err := decoder.Decode(&params)
+
+	if err != nil {
+		respondWithError(w, 400, err.Error())
+	} else {
+		db, err := models.NewDB("./internal/database/database.json")
+		if err != nil {
+			fmt.Println("SOMETHING WENT WRONG WITH MAKING THE DB")
+			return
+		}
+		users, err := db.GetUsers()
+		if err != nil {
+			respondWithError(w, 400, err.Error())
+		} else {
+			for _, usr := range users {
+				if usr.Email == params.Email {
+					fmt.Println("Found User!")
+					authenticated := bcrypt.CompareHashAndPassword([]byte(params.Password), []byte(usr.Password))
+					if authenticated != nil {
+						fmt.Println("NOT THE CORRECT PASSWORD")
+					} else {
+						respondWithJSON(w, 200, usr)
+					}
+				}
+			}
+		}
+
+	}
+
 }
 
 func receiveChirpsHandler(w http.ResponseWriter, r *http.Request) {

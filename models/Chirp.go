@@ -14,8 +14,8 @@ type DB struct {
 
 // Only used in writing, maybe reading. I don't need one of these because I'm writing and reading every update. remember this.
 type DBStructure struct {
-	Chirps map[int]Chirp `json:"chirps"`
-	Users  map[int]User  `json:"users"`
+	Chirps map[int]Chirp   `json:"chirps"`
+	Users  map[string]User `json:"users"`
 }
 type Chirp struct {
 	Body interface{} `json:"body"`

@@ -1,5 +1,9 @@
 package models
 
+import (
+	"errors"
+)
+
 type User struct {
 	Email    interface{} `json:"email"`
 	Id       int         `json:"id"`
@@ -13,7 +17,7 @@ type UserWithoutPassword struct {
 
 func (db *DB) CreateUser(email string, password string) (UserWithoutPassword, error) {
 	users, err := db.GetUsers()
-	userMap := make(map[int]User)
+	userMap := make(map[string]User)
 	if err != nil {
 		return UserWithoutPassword{}, err
 	}
@@ -25,10 +29,15 @@ func (db *DB) CreateUser(email string, password string) (UserWithoutPassword, er
 	}
 
 	for _, usr := range users {
-		userMap[usr.Id] = usr
+		_, exists := userMap[email]
+		if !exists {
+			userMap[email] = usr
+		} else {
+			return UserWithoutPassword{}, errors.New("user already exists")
+		}
 	}
 
-	userMap[user.Id] = user
+	userMap[email] = user
 
 	dbStructure := DBStructure{
 		Users: userMap,
