@@ -24,6 +24,11 @@ type Chirp struct {
 
 // NewDB creates a new database connection
 // and creates the database file if it doesn't exist
+
+// CREATING A USER DELETES ALL CHIRPS
+// CREATING A CHIRP DELETES ALL USERS
+// I DON'T KNOW WHY
+
 func NewDB(path string) (*DB, error) {
 	db := DB{
 		path: path,
