@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"slices"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/Daniel-Burbridge-Developer/Chirpy/models"
@@ -22,7 +23,9 @@ func main() {
 	mux.HandleFunc("/api/reset", apiCfg.ResetCountHandler)
 	// mux.HandleFunc("POST /api/validate_chirp", validateChirpHandler)
 	mux.HandleFunc("POST /api/chirps", uploadChirpHandler)
-	mux.HandleFunc("GET /api/chirps", receiveChirpsHandler)
+	mux.HandleFunc("GET /api/chirps/", receiveChirpsHandler)
+	mux.HandleFunc("GET /api/chirps/{id}", receiveChirpsHandler)
+	// mux.HandleFunc("GET api/chirps/*", receiveByChirpIDHandler)
 
 	corsMux := middlewareCors(mux)
 	httpServer := &http.Server{Addr: "localhost:8080", Handler: corsMux}
@@ -71,8 +74,22 @@ func receiveChirpsHandler(w http.ResponseWriter, r *http.Request) {
 		return chirps[i].Id < chirps[j].Id
 	})
 
+	pv := r.PathValue("id")
+	id, _ := strconv.Atoi(pv)
+
+	if pv != "" {
+		// fmt.Printf("attempting to return chirp %v\n", id)
+		respondWithJSON(w, 200, chirps[id-1])
+		return
+	}
+
+	// fmt.Printf("return all chirps\n")
 	respondWithJSON(w, 200, chirps)
 }
+
+// func receiveByChirpIDHandler(w http.ResponseWriter, r *http.Request) {
+// 	r.PathValue()
+// }
 
 // Not handling cases where there is no Json.Body at all. This just returns "valid", I'm fairly sure I've written this in a very hacky, not proper way.
 func validateChirpHandler(w http.ResponseWriter, r *http.Request) {
