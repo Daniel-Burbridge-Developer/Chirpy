@@ -1,23 +1,29 @@
 package models
 
 type User struct {
+	Email    interface{} `json:"email"`
+	Id       int         `json:"id"`
+	Password string      `json:"password"`
+}
+
+type UserWithoutPassword struct {
 	Email interface{} `json:"email"`
 	Id    int         `json:"id"`
 }
 
-func (db *DB) CreateUser(email string) (User, error) {
-	// fmt.Printf("inside createchirp %v\n", body)
+func (db *DB) CreateUser(email string, password string) (UserWithoutPassword, error) {
 	users, err := db.GetUsers()
 	userMap := make(map[int]User)
 	if err != nil {
-		return User{}, err
-	}
-	user := User{
-		Id:    len(users) + 1, // Assuming chirp IDs start from 1
-		Email: email,
+		return UserWithoutPassword{}, err
 	}
 
-	// Update the map with chirp ID as key
+	user := User{
+		Id:       len(users) + 1,
+		Email:    email,
+		Password: password,
+	}
+
 	for _, usr := range users {
 		userMap[usr.Id] = usr
 	}
@@ -30,10 +36,15 @@ func (db *DB) CreateUser(email string) (User, error) {
 
 	err = db.writeDB(dbStructure)
 	if err != nil {
-		return User{}, err
+		return UserWithoutPassword{}, err
 	}
 
-	return user, nil
+	userWithoutPass := UserWithoutPassword{
+		Email: user.Email,
+		Id:    user.Id,
+	}
+
+	return userWithoutPass, nil
 }
 
 // GetChirps returns all chirps in the database
@@ -51,6 +62,28 @@ func (db *DB) GetUsers() ([]User, error) {
 
 	for _, user := range dbStructure.Users {
 		users = append(users, user)
+	}
+
+	return users, nil
+}
+
+func (db *DB) GetUsersWithoutPassword() ([]UserWithoutPassword, error) {
+	db.mux.RLock()
+	defer db.mux.RUnlock()
+
+	dbStructure, err := db.loadDB()
+
+	if err != nil {
+		return make([]UserWithoutPassword, 0), err
+	}
+
+	users := make([]UserWithoutPassword, 0)
+
+	for _, user := range dbStructure.Users {
+		users = append(users, UserWithoutPassword{
+			Email: user.Email,
+			Id:    user.Id,
+		})
 	}
 
 	return users, nil

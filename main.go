@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"log"
@@ -13,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/Daniel-Burbridge-Developer/Chirpy/models"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func main() {
@@ -38,6 +40,7 @@ func main() {
 	// mux.HandleFunc("GET api/chirps/*", receiveByChirpIDHandler)
 
 	mux.HandleFunc("POST /api/users", createUserHandler)
+	mux.HandleFunc("POST /api/login", loginHandler)
 
 	corsMux := middlewareCors(mux)
 	httpServer := &http.Server{Addr: "localhost:8080", Handler: corsMux}
@@ -70,23 +73,32 @@ func uploadChirpHandler(w http.ResponseWriter, r *http.Request) {
 
 func createUserHandler(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
-		Email string `json:"email"`
+		Email    string `json:"email"`
+		Password string `json:"password"`
 	}
 
 	decoder := json.NewDecoder(r.Body)
 	params := parameters{}
 	err := decoder.Decode(&params)
 
-	// fmt.Printf("after badword replaced, before call to createchirp%v\n", chirpBody)
-
 	if err != nil {
 		respondWithError(w, 400, err.Error())
 	} else {
-		db, _ := models.NewDB("./internal/database/database.json")
-		user, _ := db.CreateUser(params.Email)
-		respondWithJSON(w, 201, user)
+		hash, err := bcrypt.GenerateFromPassword([]byte(params.Password), 13)
+		if err != nil {
+			respondWithError(w, 400, err.Error())
+		} else {
+			password := string(hash)
+			db, _ := models.NewDB("./internal/database/database.json")
+			user, _ := db.CreateUser(params.Email, password)
+			respondWithJSON(w, 201, user)
+		}
 	}
 
+}
+
+func loginHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Printf("%v", errors.New("not implemented"))
 }
 
 func receiveChirpsHandler(w http.ResponseWriter, r *http.Request) {
