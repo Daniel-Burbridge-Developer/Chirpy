@@ -2,9 +2,11 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"slices"
 	"sort"
 	"strconv"
@@ -14,6 +16,14 @@ import (
 )
 
 func main() {
+
+	dbg := flag.Bool("debug", false, "Enable debug mode")
+	flag.Parse()
+
+	if *dbg {
+		os.Remove("./internal/database/database.json")
+	}
+
 	apiCfg := &models.ApiConfig{}
 	mux := http.NewServeMux()
 
@@ -73,8 +83,8 @@ func createUserHandler(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, 400, err.Error())
 	} else {
 		db, _ := models.NewDB("./internal/database/database.json")
-		db.CreateUser(params.Email)
-		respondWithJSON(w, 201, "Created")
+		user, _ := db.CreateUser(params.Email)
+		respondWithJSON(w, 201, user)
 	}
 
 }
