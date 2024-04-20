@@ -1,5 +1,8 @@
 package main
 
+// ADDING OF NEW USERS BROKEN SINCE SWAPPING TO A EMAIL KEY -- GETS STUCK AT ID 2, LOOK INTO THIS
+// FIX THE RETURN VALUE TO NOT INCLUDE PASSWORD.
+
 import (
 	"encoding/json"
 	"flag"
@@ -121,8 +124,10 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 			for _, usr := range users {
 				if usr.Email == params.Email {
 					fmt.Println("Found User!")
-					authenticated := bcrypt.CompareHashAndPassword([]byte(params.Password), []byte(usr.Password))
+					authenticated := bcrypt.CompareHashAndPassword([]byte(usr.Password), []byte(params.Password))
 					if authenticated != nil {
+						fmt.Println(params.Password)
+						fmt.Println(usr.Password)
 						fmt.Println("NOT THE CORRECT PASSWORD")
 					} else {
 						respondWithJSON(w, 200, usr)
