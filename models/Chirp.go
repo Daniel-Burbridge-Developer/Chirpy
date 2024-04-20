@@ -15,11 +15,11 @@ type DB struct {
 // Only used in writing, maybe reading. I don't need one of these because I'm writing and reading every update. remember this.
 type DBStructure struct {
 	Chirps map[int]Chirp `json:"chirps"`
+	Users  map[int]User  `json:"users"`
 }
-
 type Chirp struct {
-	Id   int         `json:"id"`
 	Body interface{} `json:"body"`
+	Id   int         `json:"id"`
 }
 
 // NewDB creates a new database connection
@@ -56,9 +56,6 @@ func (db *DB) CreateChirp(body string) (Chirp, error) {
 		Id:   len(chirps) + 1, // Assuming chirp IDs start from 1
 		Body: body,
 	}
-
-	// fmt.Printf("chirpID %v\n", chirp.Id)
-	// fmt.Printf("chirpBODY %v\n", chirp.Body)
 
 	// Update the map with chirp ID as key
 	for _, ch := range chirps {
@@ -160,6 +157,3 @@ func (db *DB) writeDB(dbStructure DBStructure) error {
 
 	return nil
 }
-
-// Error in Unmarshalling....
-// Changed all my IDs to strings, I think this was silly but IDK.

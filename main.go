@@ -27,6 +27,8 @@ func main() {
 	mux.HandleFunc("GET /api/chirps/{id}", receiveChirpsHandler)
 	// mux.HandleFunc("GET api/chirps/*", receiveByChirpIDHandler)
 
+	mux.HandleFunc("POST /api/users", createUserHandler)
+
 	corsMux := middlewareCors(mux)
 	httpServer := &http.Server{Addr: "localhost:8080", Handler: corsMux}
 
@@ -56,6 +58,27 @@ func uploadChirpHandler(w http.ResponseWriter, r *http.Request) {
 	validateChirpHandler(w, r)
 }
 
+func createUserHandler(w http.ResponseWriter, r *http.Request) {
+	type parameters struct {
+		Email string `json:"email"`
+	}
+
+	decoder := json.NewDecoder(r.Body)
+	params := parameters{}
+	err := decoder.Decode(&params)
+
+	// fmt.Printf("after badword replaced, before call to createchirp%v\n", chirpBody)
+
+	if err != nil {
+		respondWithError(w, 400, err.Error())
+	} else {
+		db, _ := models.NewDB("./internal/database/database.json")
+		db.CreateUser(params.Email)
+		respondWithJSON(w, 201, "Created")
+	}
+
+}
+
 func receiveChirpsHandler(w http.ResponseWriter, r *http.Request) {
 	db, err := models.NewDB("./internal/database/database.json")
 	if err != nil {
@@ -78,18 +101,16 @@ func receiveChirpsHandler(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.Atoi(pv)
 
 	if pv != "" {
-		// fmt.Printf("attempting to return chirp %v\n", id)
-		respondWithJSON(w, 200, chirps[id-1])
-		return
+		if id <= len(chirps) {
+			respondWithJSON(w, 200, chirps[id-1])
+			return
+		} else {
+			respondWithError(w, 404, "chirp not found")
+		}
 	}
 
-	// fmt.Printf("return all chirps\n")
 	respondWithJSON(w, 200, chirps)
 }
-
-// func receiveByChirpIDHandler(w http.ResponseWriter, r *http.Request) {
-// 	r.PathValue()
-// }
 
 // Not handling cases where there is no Json.Body at all. This just returns "valid", I'm fairly sure I've written this in a very hacky, not proper way.
 func validateChirpHandler(w http.ResponseWriter, r *http.Request) {
