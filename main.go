@@ -130,7 +130,8 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 						fmt.Println(usr.Password)
 						fmt.Println("NOT THE CORRECT PASSWORD")
 					} else {
-						respondWithJSON(w, 200, usr)
+						usrWithoutPassword := models.UserWithoutPassword{Email: usr.Email, Id: usr.Id}
+						respondWithJSON(w, 200, usrWithoutPassword)
 					}
 				}
 			}

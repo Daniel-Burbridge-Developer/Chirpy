@@ -2,6 +2,7 @@ package models
 
 import (
 	"errors"
+	"fmt"
 )
 
 type User struct {
@@ -17,7 +18,7 @@ type UserWithoutPassword struct {
 
 func (db *DB) CreateUser(email string, password string) (UserWithoutPassword, error) {
 	users, err := db.GetUsers()
-	userMap := make(map[string]User)
+	userMap := make(map[int]User)
 	if err != nil {
 		return UserWithoutPassword{}, err
 	}
@@ -28,20 +29,27 @@ func (db *DB) CreateUser(email string, password string) (UserWithoutPassword, er
 		Password: password,
 	}
 
+	fmt.Printf("users: %v\n", users)
+
+	emailTaken := false
 	for _, usr := range users {
-		_, exists := userMap[email]
-		if !exists {
-			userMap[email] = usr
-		} else {
-			return UserWithoutPassword{}, errors.New("user already exists")
+		userMap[usr.Id] = usr
+		if usr.Email == email {
+			emailTaken = true
 		}
 	}
 
-	userMap[email] = user
+	if !emailTaken {
+		userMap[user.Id] = user
+	} else {
+		return UserWithoutPassword{}, errors.New("user already exists found")
+	}
 
 	dbStructure := DBStructure{
 		Users: userMap,
 	}
+
+	fmt.Printf("db struct: %v\n", dbStructure)
 
 	err = db.writeDB(dbStructure)
 	if err != nil {
