@@ -2,7 +2,6 @@ package models
 
 import (
 	"errors"
-	"fmt"
 )
 
 type User struct {
@@ -29,8 +28,6 @@ func (db *DB) CreateUser(email string, password string) (UserWithoutPassword, er
 		Password: password,
 	}
 
-	fmt.Printf("users: %v\n", users)
-
 	emailTaken := false
 	for _, usr := range users {
 		userMap[usr.Id] = usr
@@ -48,8 +45,6 @@ func (db *DB) CreateUser(email string, password string) (UserWithoutPassword, er
 	dbStructure := DBStructure{
 		Users: userMap,
 	}
-
-	fmt.Printf("db struct: %v\n", dbStructure)
 
 	err = db.writeDB(dbStructure)
 	if err != nil {

@@ -43,6 +43,7 @@ func main() {
 
 	mux.HandleFunc("POST /api/users", createUserHandler)
 	mux.HandleFunc("POST /api/login", loginHandler)
+	mux.HandleFunc("PUT /api/users", updateUsersHandler)
 
 	corsMux := middlewareCors(mux)
 	httpServer := &http.Server{Addr: "localhost:8080", Handler: corsMux}
@@ -61,6 +62,10 @@ func middlewareCors(next http.Handler) http.Handler {
 		}
 		next.ServeHTTP(w, r)
 	})
+}
+
+func updateUsersHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Printf("Not yet implemented")
 }
 
 func readinessHandler(w http.ResponseWriter, r *http.Request) {
@@ -123,12 +128,9 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		} else {
 			for _, usr := range users {
 				if usr.Email == params.Email {
-					fmt.Println("Found User!")
 					authenticated := bcrypt.CompareHashAndPassword([]byte(usr.Password), []byte(params.Password))
 					if authenticated != nil {
-						fmt.Println(params.Password)
-						fmt.Println(usr.Password)
-						fmt.Println("NOT THE CORRECT PASSWORD")
+						respondWithError(w, 401, "Invalid Login")
 					} else {
 						usrWithoutPassword := models.UserWithoutPassword{Email: usr.Email, Id: usr.Id}
 						respondWithJSON(w, 200, usrWithoutPassword)
