@@ -1,8 +1,5 @@
 package main
 
-// ADDING OF NEW USERS BROKEN SINCE SWAPPING TO A EMAIL KEY -- GETS STUCK AT ID 2, LOOK INTO THIS
-// FIX THE RETURN VALUE TO NOT INCLUDE PASSWORD.
-
 import (
 	"encoding/json"
 	"flag"
@@ -16,10 +13,13 @@ import (
 	"strings"
 
 	"github.com/Daniel-Burbridge-Developer/Chirpy/models"
+	"github.com/joho/godotenv"
 	"golang.org/x/crypto/bcrypt"
 )
 
 func main() {
+
+	godotenv.Load()
 
 	dbg := flag.Bool("debug", false, "Enable debug mode")
 	flag.Parse()
@@ -29,6 +29,7 @@ func main() {
 	}
 
 	apiCfg := &models.ApiConfig{}
+	apiCfg.JwtSecret = os.Getenv("JWT_SECRET")
 	mux := http.NewServeMux()
 
 	mux.Handle("/app/*", http.StripPrefix("/app", apiCfg.MiddlewareMetricsInc(http.FileServer(http.Dir(".")))))
@@ -80,8 +81,9 @@ func uploadChirpHandler(w http.ResponseWriter, r *http.Request) {
 
 func createUserHandler(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
-		Email    string `json:"email"`
-		Password string `json:"password"`
+		Email            string `json:"email"`
+		Password         string `json:"password"`
+		ExpiresInSeconds int    `json:"expires_in_seconds"`
 	}
 
 	decoder := json.NewDecoder(r.Body)
